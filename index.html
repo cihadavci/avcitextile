@@ -1854,7 +1854,7 @@ function urunKaydet() {
   const urun = {
     id: Date.now(), kod, adi, cinsiyet, kategori, tip,
     gorsel: formGorsel,
-    kumashid: formSeciliKumash,
+    kumashId: formSeciliKumash,
     renkler: seciliRenkObj,
     asorti,
     notlar: document.getElementById('notlar').value,
@@ -1915,7 +1915,7 @@ function urunListesiGoster() {
     const katAdi = u.kategori==='IC' ? 'İç Çamaşırı' : 'Gündelik';
     const cinAdi = CINSIYET_ADI[u.cinsiyet]||u.cinsiyet;
     const toplamAsorti = Object.values(u.asorti||{}).reduce((s,v)=>s+v,0);
-    const kumash = db.kumashlar.find(k=>k.id===u.kumashid);
+    const kumash = db.kumashlar.find(k=>k.id===u.kumashId);
 
     const gorselHTML = u.gorsel
       ? `<img src="${u.gorsel}" style="width:100%;height:160px;object-fit:cover;">`
@@ -3435,7 +3435,7 @@ function urunDuzenle(id) {
   }
 
   // Kumaş
-  formSeciliKumash = urun.kumashid || null;
+  formSeciliKumash = urun.kumashId || null;
   kumashSecimAlaniniGuncelle();
 
   // Renkler
@@ -3500,7 +3500,7 @@ async function urunGuncelle() {
   const guncelleme = {
     adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip,
     gorsel: formGorsel,
-    kumashid: formSeciliKumash,
+    kumashId: formSeciliKumash,
     renkler: seciliRenkObj,
     asorti: asorti,
     notlar: document.getElementById('notlar').value
@@ -4359,7 +4359,7 @@ async function urunKaydet() {
   const asorti = {};
   BEDENLER.forEach(function(b){ const v = parseInt(document.getElementById('bed-'+b) && document.getElementById('bed-'+b).value) || 0; if(v>0) asorti[b]=v; });
   const seciliRenkObj = Array.from(formSeciliRenkler).map(function(id){ return db.renkler.find(function(r){ return r.id===id; }); }).filter(Boolean);
-  const veri = { kod: kod, adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip, gorsel: formGorsel, kumashid: formSeciliKumash, renkler: seciliRenkObj, asorti: asorti, notlar: document.getElementById('notlar').value, tarih: new Date().toLocaleDateString('tr-TR') };
+  const veri = { kod: kod, adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip, gorsel: formGorsel, kumashId: formSeciliKumash, renkler: seciliRenkObj, asorti: asorti, notlar: document.getElementById('notlar').value, tarih: new Date().toLocaleDateString('tr-TR') };
   const yeni = await sbEkle('urunler', veri);
   if (!yeni) return;
   db.urunler.push(yeni);
