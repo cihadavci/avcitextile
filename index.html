@@ -176,16 +176,7 @@ textarea { resize: vertical; min-height: 80px; }
 .toast.success { border-color: var(--success); background: var(--success-light); color: #2E7D5A; }
 .toast.error { border-color: var(--danger); background: var(--danger-light); color: #C0392B; }
 
-/* AI */
-.ai-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
-.ai-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.ai-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.ai-title { font-size: 11px; font-weight: 600; color: var(--success); letter-spacing: 1px; text-transform: uppercase; }
-.ai-input-row { display: flex; gap: 10px; }
-.ai-input-row input { flex: 1; }
-.ai-response { margin-top: 12px; padding: 14px; background: var(--bg); border-radius: 8px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; display: none; border-left: 2px solid var(--success); }
-.ai-response.visible { display: block; }
+
 
 .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
 .empty-icon { font-size: 40px; margin-bottom: 12px; }
@@ -713,9 +704,7 @@ textarea { resize: vertical; min-height: 80px; }
         </div>
       </div>
 
-      <div class="ai-panel">
-        <div class="ai-header"><div class="ai-dot"></div><div class="ai-title">AI Ürün Asistanı</div></div>
-        <div class="ai-input-row">
+              <div class="ai-input-row">
           <input type="text" id="ai-soru" placeholder="Örn: Erkek çocuk boxer için standart asorti beden dağılımı nasıl olmalı?" onkeydown="if(event.key==='Enter') aiSor()">
           <button class="btn btn-secondary" onclick="aiSor()">Sor →</button>
         </div>
@@ -1658,12 +1647,12 @@ function renklerVarsayilanEkle() {
 
 function kumashlarVarsayilanEkle() {
   db.kumashlar = [
-    { id:1, ad:'Single Jersey', lifler:[{tip:'Pamuk',oran:100}], kompozisyon:'%100 Pamuk', agirlik:'160', kullanimAlani:'T-Shirt, Atlet' },
-    { id:2, ad:'Ribana', lifler:[{tip:'Pamuk',oran:95},{tip:'Likra (Elastan)',oran:5}], kompozisyon:'%95 Pamuk · %5 Likra', agirlik:'220', kullanimAlani:'Külot, Boxer' },
-    { id:3, ad:'Penye', lifler:[{tip:'Pamuk',oran:100}], kompozisyon:'%100 Pamuk', agirlik:'180', kullanimAlani:'İç Çamaşırı, Atlet' },
-    { id:4, ad:'Likralı Pamuk', lifler:[{tip:'Pamuk',oran:90},{tip:'Likra (Elastan)',oran:10}], kompozisyon:'%90 Pamuk · %10 Likra', agirlik:'200', kullanimAlani:'Tayt, Boxer' },
-    { id:5, ad:'Polyester Süprem', lifler:[{tip:'Polyester',oran:100}], kompozisyon:'%100 Polyester', agirlik:'140', kullanimAlani:'Sportwear, T-Shirt' },
-    { id:6, ad:'Polar Fleece', lifler:[{tip:'Polyester',oran:100}], kompozisyon:'%100 Polyester', agirlik:'300', kullanimAlani:'Sweatshirt, Eşofman' },
+    { id:1, ad:'Single Jersey', lifler:[{tip:'Pamuk',oran:100}], kompozisyon:'%100 Pamuk', agirlik:'160', kullanimalani:'T-Shirt, Atlet' },
+    { id:2, ad:'Ribana', lifler:[{tip:'Pamuk',oran:95},{tip:'Likra (Elastan)',oran:5}], kompozisyon:'%95 Pamuk · %5 Likra', agirlik:'220', kullanimalani:'Külot, Boxer' },
+    { id:3, ad:'Penye', lifler:[{tip:'Pamuk',oran:100}], kompozisyon:'%100 Pamuk', agirlik:'180', kullanimalani:'İç Çamaşırı, Atlet' },
+    { id:4, ad:'Likralı Pamuk', lifler:[{tip:'Pamuk',oran:90},{tip:'Likra (Elastan)',oran:10}], kompozisyon:'%90 Pamuk · %10 Likra', agirlik:'200', kullanimalani:'Tayt, Boxer' },
+    { id:5, ad:'Polyester Süprem', lifler:[{tip:'Polyester',oran:100}], kompozisyon:'%100 Polyester', agirlik:'140', kullanimalani:'Sportwear, T-Shirt' },
+    { id:6, ad:'Polar Fleece', lifler:[{tip:'Polyester',oran:100}], kompozisyon:'%100 Polyester', agirlik:'300', kullanimalani:'Sweatshirt, Eşofman' },
   ];
   dbKaydet();
 }
@@ -1854,7 +1843,7 @@ function urunKaydet() {
   const urun = {
     id: Date.now(), kod, adi, cinsiyet, kategori, tip,
     gorsel: formGorsel,
-    kumashId: formSeciliKumash,
+    kumashid: formSeciliKumash,
     renkler: seciliRenkObj,
     asorti,
     notlar: document.getElementById('notlar').value,
@@ -1915,7 +1904,7 @@ function urunListesiGoster() {
     const katAdi = u.kategori==='IC' ? 'İç Çamaşırı' : 'Gündelik';
     const cinAdi = CINSIYET_ADI[u.cinsiyet]||u.cinsiyet;
     const toplamAsorti = Object.values(u.asorti||{}).reduce((s,v)=>s+v,0);
-    const kumash = db.kumashlar.find(k=>k.id===u.kumashId);
+    const kumash = db.kumashlar.find(k=>k.id===u.kumashid);
 
     const gorselHTML = u.gorsel
       ? `<img src="${u.gorsel}" style="width:100%;height:160px;object-fit:cover;">`
@@ -2087,7 +2076,7 @@ function kumashTablosuGoster() {
       <td><strong>${k.ad}</strong></td>
       <td style="max-width:260px;">${kompozMetin}</td>
       <td>${k.agirlik ? k.agirlik + ' gr/m²' : '—'}</td>
-      <td style="color:var(--muted); font-size:12px;">${k.kullanimAlani||'—'}</td>
+      <td style="color:var(--muted); font-size:12px;">${k.kullanimalani||'—'}</td>
       <td><button class="btn btn-danger btn-sm" onclick="kumashSil(${k.id})">Sil</button></td>
     </tr>`;
   }).join('');
@@ -2105,7 +2094,7 @@ function kumashEkle() {
 
   const id = Date.now();
   const kompozisyon = kompozisyonMetniAl(lifler);
-  db.kumashlar.push({ id, ad, lifler, kompozisyon, agirlik, kullanimAlani: '' });
+  db.kumashlar.push({ id, ad, lifler, kompozisyon, agirlik, kullanimalani: '' });
   dbKaydet();
   kumashTablosuGoster();
   kumashSecimAlaniniGuncelle();
@@ -2129,33 +2118,7 @@ function kumashSil(id) {
   showToast('Kumaş silindi', 'success');
 }
 
-// ======== AI ========
-async function aiSor() {
-  const soru = document.getElementById('ai-soru').value.trim();
-  if (!soru) return;
-  const yanit = document.getElementById('ai-yanit');
-  yanit.className = 'ai-response visible';
-  yanit.textContent = 'Yanıt hazırlanıyor...';
-  yanit.style.color = 'var(--muted)';
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: 'Sen bir Türkiye hazır giyim üretim uzmanısın. İç çamaşırı (külot, boxer, atlet) ve gündelik giyim (tshirt, tayt, gömlek, polo) konusunda uzmansın. Asorti, beden dağılımı, kumaş seçimi, stok yönetimi konularında pratik ve kısa cevaplar ver. Türkçe konuş.',
-        messages: [{ role: 'user', content: soru }]
-      })
-    });
-    const data = await res.json();
-    yanit.style.color = 'var(--text)';
-    yanit.textContent = data.content?.[0]?.text || 'Yanıt alınamadı.';
-  } catch(e) {
-    yanit.style.color = 'var(--danger)';
-    yanit.textContent = 'Bağlantı hatası oluştu.';
-  }
-}
+
 
 
 // ======== ÜRETİM GİRİŞİ ========
@@ -3435,7 +3398,7 @@ function urunDuzenle(id) {
   }
 
   // Kumaş
-  formSeciliKumash = urun.kumashId || null;
+  formSeciliKumash = urun.kumashid || null;
   kumashSecimAlaniniGuncelle();
 
   // Renkler
@@ -3500,7 +3463,7 @@ async function urunGuncelle() {
   const guncelleme = {
     adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip,
     gorsel: formGorsel,
-    kumashId: formSeciliKumash,
+    kumashid: formSeciliKumash,
     renkler: seciliRenkObj,
     asorti: asorti,
     notlar: document.getElementById('notlar').value
@@ -4326,7 +4289,7 @@ async function kumashEkle() {
   if (lifler.length === 0) { showToast('En az bir lif ekleyin', 'error'); return; }
   if (toplam !== 100) { showToast('Toplam %' + toplam + ' olmali %100', 'error'); return; }
   const kompozisyon = kompozisyonMetniAl(lifler);
-  const yeni = await sbEkle('kumashlar', { ad: ad, lifler: lifler, kompozisyon: kompozisyon, agirlik: agirlik, kullanimAlani: '' });
+  const yeni = await sbEkle('kumashlar', { ad: ad, lifler: lifler, kompozisyon: kompozisyon, agirlik: agirlik, kullanimalani: '' });
   if (!yeni) return;
   db.kumashlar.push(yeni); dbKaydet();
   kumashTablosuGoster(); kumashSecimAlaniniGuncelle(); sayaclariGuncelle();
@@ -4359,7 +4322,7 @@ async function urunKaydet() {
   const asorti = {};
   BEDENLER.forEach(function(b){ const v = parseInt(document.getElementById('bed-'+b) && document.getElementById('bed-'+b).value) || 0; if(v>0) asorti[b]=v; });
   const seciliRenkObj = Array.from(formSeciliRenkler).map(function(id){ return db.renkler.find(function(r){ return r.id===id; }); }).filter(Boolean);
-  const veri = { kod: kod, adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip, gorsel: formGorsel, kumashId: formSeciliKumash, renkler: seciliRenkObj, asorti: asorti, notlar: document.getElementById('notlar').value, tarih: new Date().toLocaleDateString('tr-TR') };
+  const veri = { kod: kod, adi: adi, cinsiyet: cinsiyet, kategori: kategori, tip: tip, gorsel: formGorsel, kumashid: formSeciliKumash, renkler: seciliRenkObj, asorti: asorti, notlar: document.getElementById('notlar').value, tarih: new Date().toLocaleDateString('tr-TR') };
   const yeni = await sbEkle('urunler', veri);
   if (!yeni) return;
   db.urunler.push(yeni);
@@ -4498,12 +4461,12 @@ async function renklerVarsayilanEkleDB() {
 
 async function kumashlarVarsayilanEkleDB() {
   const list = [
-    {ad:'Single Jersey',lifler:[{tip:'Pamuk',oran:100}],kompozisyon:'%100 Pamuk',agirlik:'160',kullanimAlani:'T-Shirt, Atlet'},
-    {ad:'Ribana',lifler:[{tip:'Pamuk',oran:95},{tip:'Likra',oran:5}],kompozisyon:'%95 Pamuk %5 Likra',agirlik:'220',kullanimAlani:'Kulot, Boxer'},
-    {ad:'Penye',lifler:[{tip:'Pamuk',oran:100}],kompozisyon:'%100 Pamuk',agirlik:'180',kullanimAlani:'Ic Camasiri, Atlet'},
-    {ad:'Likrali Pamuk',lifler:[{tip:'Pamuk',oran:90},{tip:'Likra',oran:10}],kompozisyon:'%90 Pamuk %10 Likra',agirlik:'200',kullanimAlani:'Tayt, Boxer'},
-    {ad:'Polyester Suprem',lifler:[{tip:'Polyester',oran:100}],kompozisyon:'%100 Polyester',agirlik:'140',kullanimAlani:'Sportwear'},
-    {ad:'Polar Fleece',lifler:[{tip:'Polyester',oran:100}],kompozisyon:'%100 Polyester',agirlik:'300',kullanimAlani:'Sweatshirt'}
+    {ad:'Single Jersey',lifler:[{tip:'Pamuk',oran:100}],kompozisyon:'%100 Pamuk',agirlik:'160',kullanimalani:'T-Shirt, Atlet'},
+    {ad:'Ribana',lifler:[{tip:'Pamuk',oran:95},{tip:'Likra',oran:5}],kompozisyon:'%95 Pamuk %5 Likra',agirlik:'220',kullanimalani:'Kulot, Boxer'},
+    {ad:'Penye',lifler:[{tip:'Pamuk',oran:100}],kompozisyon:'%100 Pamuk',agirlik:'180',kullanimalani:'Ic Camasiri, Atlet'},
+    {ad:'Likrali Pamuk',lifler:[{tip:'Pamuk',oran:90},{tip:'Likra',oran:10}],kompozisyon:'%90 Pamuk %10 Likra',agirlik:'200',kullanimalani:'Tayt, Boxer'},
+    {ad:'Polyester Suprem',lifler:[{tip:'Polyester',oran:100}],kompozisyon:'%100 Polyester',agirlik:'140',kullanimalani:'Sportwear'},
+    {ad:'Polar Fleece',lifler:[{tip:'Polyester',oran:100}],kompozisyon:'%100 Polyester',agirlik:'300',kullanimalani:'Sweatshirt'}
   ];
   const res = await getSB().from('kumashlar').insert(list).select();
   if (res.data) { db.kumashlar = res.data; dbKaydet(); }
