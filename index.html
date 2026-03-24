@@ -564,8 +564,43 @@ textarea { resize: vertical; min-height: 80px; }
   border-top: 1px solid var(--border);
 }
 .autocomplete-yeni:hover { background: var(--accent-light); }
+
+/* BARKOD / QR */
+.barkod-filtre { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+.barkod-filtre select, .barkod-filtre input { flex:1; min-width:160px; }
+
+.barkod-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px; }
+
+.barkod-kart {
+  background:var(--surface); border:1.5px solid var(--border);
+  border-radius:14px; padding:20px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  transition:all 0.2s;
+}
+.barkod-kart:hover { border-color:var(--accent); box-shadow:var(--shadow-md); }
+
+.barkod-label {
+  font-family:'Courier New',monospace; font-size:13px; font-weight:700;
+  color:var(--accent); letter-spacing:1px; text-align:center;
+}
+.barkod-alt { font-size:11px; color:var(--muted); text-align:center; }
+
+.barkod-kod-area { background:#fff; border-radius:8px; padding:12px; width:100%; display:flex; flex-direction:column; align-items:center; gap:8px; }
+
+.barkod-btn-row { display:flex; gap:8px; width:100%; }
+.barkod-btn-row button { flex:1; }
+
+/* Print */
+@media print {
+  header, .sidebar, .page-header, .barkod-filtre, .barkod-btn-row, .nav-item { display:none !important; }
+  .barkod-grid { grid-template-columns: repeat(3,1fr) !important; }
+  .barkod-kart { break-inside:avoid; border:1px solid #ccc !important; box-shadow:none !important; }
+  .main { padding:0 !important; }
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
@@ -1183,6 +1218,16 @@ textarea { resize: vertical; min-height: 80px; }
         </div>
       </div>
 
+      <!-- SON 5 GÜN ÜRETİM -->
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div class="card-title" style="margin-bottom:0;">📅 Son 5 Günün Üretimi</div>
+          <div id="dash-haftalik-toplam" style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--accent);"></div>
+        </div>
+        <div id="dash-son5gun" style="display:flex;gap:12px;align-items:flex-end;height:100px;"></div>
+        <div id="dash-son5gun-etiket" style="display:flex;gap:12px;margin-top:6px;"></div>
+      </div>
+
       <!-- ORTA: TOP5 + STOK UYARI -->
       <div class="dash-grid-mid">
         <div class="dash-card">
@@ -1483,10 +1528,65 @@ textarea { resize: vertical; min-height: 80px; }
             <textarea id="m-notlar" placeholder="Müşteriye özel notlar..."></textarea>
           </div>
         </div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button class="btn btn-secondary" onclick="musteriModalKapat()">İptal</button>
-          <button class="btn btn-primary" onclick="musteriKaydet()">💾 Kaydet</button>
+        <div style="display:flex;gap:10px;justify-content:space-between;align-items:center;">
+          <button class="btn btn-danger btn-sm" id="musteri-sil-btn" style="display:none;" onclick="musteriModaldenSil()">🗑 Müşteriyi Sil</button>
+          <div style="display:flex;gap:10px;margin-left:auto;">
+            <button class="btn btn-secondary" onclick="musteriModalKapat()">İptal</button>
+            <button class="btn btn-primary" onclick="musteriKaydet()">💾 Kaydet</button>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ===== BARKOD / QR ===== -->
+    <div class="page" id="page-barkod">
+      <div class="page-header">
+        <div><div class="page-title">Barkod / QR Kod</div><div class="page-sub">SKU, sipariş ve müşteri kodları için etiket üretimi</div></div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-secondary" onclick="tumunuYazdir()">🖨️ Tümünü Yazdır</button>
+          <button class="btn btn-primary" onclick="secilenleriIndir()">⬇️ PNG İndir</button>
+        </div>
+      </div>
+
+      <!-- FİLTRE -->
+      <div class="card" style="margin-bottom:20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;align-items:end;">
+          <div class="form-group">
+            <label>Kaynak</label>
+            <select id="bk-kaynak" onchange="barkodListesiGoster()">
+              <option value="sku">SKU Kodları (Ürünler)</option>
+              <option value="siparis">Sipariş Numaraları</option>
+              <option value="musteri">Müşteri Kodları</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Kod Tipi</label>
+            <select id="bk-tip" onchange="barkodListesiGoster()">
+              <option value="qr">QR Kod</option>
+              <option value="barkod">Barkod (Code128)</option>
+              <option value="ikisi">QR + Barkod</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Ara</label>
+            <input type="text" id="bk-arama" placeholder="Kod ara..." oninput="barkodListesiGoster()">
+          </div>
+          <div class="form-group">
+            <label>Etiket Boyutu</label>
+            <select id="bk-boyut" onchange="barkodListesiGoster()">
+              <option value="kucuk">Küçük (50x30mm)</option>
+              <option value="orta" selected>Orta (70x40mm)</option>
+              <option value="buyuk">Büyük (100x60mm)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- BARKOD GRID -->
+      <div class="barkod-grid" id="barkod-grid"></div>
+      <div id="barkod-bos" class="empty-state" style="display:none;">
+        <div class="empty-icon">🔲</div>
+        <div>Gösterilecek kod yok. Ürün, sipariş veya müşteri ekleyin.</div>
       </div>
     </div>
 
@@ -1584,6 +1684,7 @@ function showPage(id, el) {
   if (id === 'raporlar') raporlarSayfasiAc();
   if (id === 'siparisler') siparislerSayfasiAc();
   if (id === 'musteriler') musterilerSayfasiAc();
+  if (id === 'barkod') barkodSayfasiAc();
   if (id === 'fire-giris') fireGirisSayfasiAc();
   if (id === 'renk-yonetim') renkTablosuGoster();
   if (id === 'kumash-yonetim') kumashTablosuGoster();
@@ -2084,34 +2185,31 @@ function uretimSatiriEkle() {
   const id = ++uretimSatirSayac;
   const div = document.createElement('div');
   div.className = 'uretim-satiri';
-  div.id = `u-satir-${id}`;
+  div.id = 'u-satir-' + id;
+  div.style.gridTemplateColumns = '1fr 1fr 120px 36px';
 
-  // Ürün seçenekleri: tüm ürünler
   const urunSecenekleri = db.urunler.length === 0
-    ? '<option value="">Önce ürün kartı oluşturun</option>'
-    : '<option value="">Ürün seçin...</option>' + db.urunler.map(u =>
-        `<option value="${u.id}">${u.kod} — ${u.adi}</option>`
-      ).join('');
+    ? '<option value="">Once urun karti olusturun</option>'
+    : '<option value="">Urun secin...</option>' + db.urunler.map(function(u) {
+        return '<option value="' + u.id + '">' + u.kod + ' - ' + u.adi + '</option>';
+      }).join('');
 
-  div.innerHTML = `
-    <div class="form-group">
-      <label>Ürün</label>
-      <select id="u-urun-${id}" onchange="uretimRenkleriniGuncelle(${id})">
-        ${urunSecenekleri}
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Renk (SKU)</label>
-      <select id="u-renk-${id}">
-        <option value="">Önce ürün seçin</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Üretilen Adet</label>
-      <input type="number" id="u-adet-${id}" min="0" placeholder="0" oninput="uretimOzetGuncelle()">
-    </div>
-    <button onclick="uretimSatiriSil(${id})" style="background:none;border:1px solid #3a2020;border-radius:6px;color:var(--danger);cursor:pointer;width:36px;height:36px;font-size:16px;display:flex;align-items:center;justify-content:center;align-self:flex-end;">×</button>
-  `;
+  const sipSecenekleri = '<option value="">- Siparis secmek zorunda degilsiniz -</option>' +
+    (db.siparisler||[]).filter(function(s){ return s.durum !== 'teslim'; }).map(function(s) {
+      return '<option value="' + s.id + '">' + s.siparisno + ' - ' + s.musteriadi + '</option>';
+    }).join('');
+
+  div.innerHTML =
+    '<div class="form-group"><label>Urun</label>' +
+    '<select id="u-urun-' + id + '" onchange="uretimRenkleriniGuncelle(' + id + ')">' + urunSecenekleri + '</select></div>' +
+    '<div class="form-group"><label>Renk (SKU)</label>' +
+    '<select id="u-renk-' + id + '"><option value="">Once urun secin</option></select></div>' +
+    '<div class="form-group"><label>Adet</label>' +
+    '<input type="number" id="u-adet-' + id + '" min="0" placeholder="0" oninput="uretimOzetGuncelle()"></div>' +
+    '<button onclick="uretimSatiriSil(' + id + ')" style="background:none;border:1px solid #FFD5D5;border-radius:6px;color:var(--danger);cursor:pointer;width:36px;height:36px;font-size:14px;display:flex;align-items:center;justify-content:center;align-self:flex-end;">x</button>' +
+    '<div class="form-group" style="grid-column:1/-1;">' +
+    '<label style="color:var(--muted);">Siparis (opsiyonel)</label>' +
+    '<select id="u-siparis-' + id + '" style="font-size:12px;">' + sipSecenekleri + '</select></div>';
 
   document.getElementById('uretim-satirlari').appendChild(div);
   uretimOzetGuncelle();
@@ -3808,6 +3906,10 @@ function musteriListesiGoster() {
         '<span style="font-size:11px;color:var(--muted);">' + (m.kayittarihi||'') + '</span>' +
         '<span style="font-size:12px;color:var(--accent);font-weight:600;">' + siparisSayisi + ' sipariş</span>' +
       '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;">' +
+        '<button onclick="musteriDetay('+m.id+')" style="flex:1;padding:7px;border-radius:8px;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;">✏️ Düzenle</button>' +
+        '<button onclick="musteriSilById('+m.id+')" style="flex:1;padding:7px;border-radius:8px;background:var(--danger-light);border:1.5px solid #FFD5D5;color:var(--danger);font-size:12px;font-weight:500;cursor:pointer;">🗑 Sil</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
@@ -3826,6 +3928,8 @@ function yeniMusteriModal(oncekiAd) {
   document.getElementById('m-vergino').value = '';
   document.getElementById('m-adres').value = '';
   document.getElementById('m-notlar').value = '';
+  var silBtn = document.getElementById('musteri-sil-btn');
+  if (silBtn) silBtn.style.display = 'none';
   document.getElementById('musteri-modal').style.display = 'flex';
 }
 
@@ -3875,6 +3979,32 @@ async function musteriKaydet() {
   musteriModalKapat();
   musteriListesiGoster();
   sayaclariGuncelle();
+}
+
+async function musteriSilById(id) {
+  var m = db.musteriler.find(function(x){ return x.id === id; });
+  if (!m) return;
+  if (!confirm(m.firmaadi + ' silinecek. Emin misiniz?')) return;
+  var res = await getSB().from('musteriler').delete().eq('id', id);
+  if (res.error) { showToast('Hata: ' + res.error.message, 'error'); return; }
+  db.musteriler = db.musteriler.filter(function(x){ return x.id !== id; });
+  dbKaydet();
+  musteriListesiGoster();
+  sayaclariGuncelle();
+  showToast('Müşteri silindi', 'success');
+}
+
+async function musteriSilOnay(id) {
+  var m = db.musteriler.find(function(x){ return x.id === id; });
+  if (!m) return;
+  if (!confirm(m.firmaadi + ' silinecek. Emin misiniz?')) return;
+  var res = await getSB().from('musteriler').delete().eq('id', id);
+  if (res.error) { showToast('Hata: ' + res.error.message, 'error'); return; }
+  db.musteriler = db.musteriler.filter(function(x){ return x.id !== id; });
+  dbKaydet();
+  musteriListesiGoster();
+  sayaclariGuncelle();
+  showToast('Müşteri silindi', 'success');
 }
 
 function musteriDetay(id) {
@@ -3941,6 +4071,146 @@ function musteriSec(el) {
   var dropdown = document.getElementById('musteri-dropdown');
   if (input) input.value = firmaAdi;
   if (dropdown) dropdown.style.display = 'none';
+}
+
+
+// ======== BARKOD / QR ========
+function barkodSayfasiAc() {
+  setTimeout(barkodListesiGoster, 100);
+}
+
+function barkodListesiGoster() {
+  var kaynak = document.getElementById('bk-kaynak') && document.getElementById('bk-kaynak').value || 'sku';
+  var tip = document.getElementById('bk-tip') && document.getElementById('bk-tip').value || 'qr';
+  var arama = ((document.getElementById('bk-arama') && document.getElementById('bk-arama').value) || '').toLowerCase();
+  var boyut = document.getElementById('bk-boyut') && document.getElementById('bk-boyut').value || 'orta';
+
+  var liste = [];
+
+  if (kaynak === 'sku') {
+    db.urunler.forEach(function(u) {
+      var renkler = u.renkler && u.renkler.length > 0 ? u.renkler : [null];
+      renkler.forEach(function(r) {
+        var sku = r ? (u.kod + '-' + r.sku) : u.kod;
+        var alt = u.adi + (r ? ' · ' + r.ad : '');
+        if (!arama || sku.toLowerCase().includes(arama) || alt.toLowerCase().includes(arama)) {
+          liste.push({ kod: sku, alt: alt, tip: 'SKU', renk: r ? r.hex : null });
+        }
+      });
+    });
+  } else if (kaynak === 'siparis') {
+    (db.siparisler||[]).forEach(function(s) {
+      if (!arama || s.siparisno.toLowerCase().includes(arama) || s.musteriadi.toLowerCase().includes(arama)) {
+        liste.push({ kod: s.siparisno, alt: s.musteriadi + ' · ' + (s.termintarihi||''), tip: 'SİPARİŞ', renk: null });
+      }
+    });
+  } else if (kaynak === 'musteri') {
+    (db.musteriler||[]).forEach(function(m) {
+      var musteriKod = 'MUS-' + String(m.id).padStart(4,'0');
+      if (!arama || musteriKod.toLowerCase().includes(arama) || m.firmaadi.toLowerCase().includes(arama)) {
+        liste.push({ kod: musteriKod, alt: m.firmaadi + (m.sehir ? ' · ' + m.sehir : ''), tip: 'MÜŞTERİ', renk: null });
+      }
+    });
+  }
+
+  var grid = document.getElementById('barkod-grid');
+  var bos = document.getElementById('barkod-bos');
+
+  if (liste.length === 0) { grid.innerHTML = ''; bos.style.display = 'block'; return; }
+  bos.style.display = 'none';
+
+  var boyutlar = { kucuk: {w:180,qr:100,bh:40}, orta: {w:220,qr:130,bh:50}, buyuk: {w:280,qr:160,bh:60} };
+  var b = boyutlar[boyut];
+
+  grid.innerHTML = liste.map(function(item, idx) {
+    return '<div class="barkod-kart" id="bk-kart-'+idx+'">' +
+      '<div style="display:flex;align-items:center;gap:6px;">' +
+        (item.renk ? '<div style="width:10px;height:10px;border-radius:50%;background:'+item.renk+';border:1px solid var(--border);flex-shrink:0;"></div>' : '') +
+        '<div class="barkod-label">' + item.kod + '</div>' +
+      '</div>' +
+      '<div class="barkod-alt">' + item.alt + '</div>' +
+      '<div class="barkod-kod-area" id="bk-area-'+idx+'">' +
+        (tip === 'qr' || tip === 'ikisi' ? '<canvas id="bk-qr-'+idx+'" width="'+b.qr+'" height="'+b.qr+'"></canvas>' : '') +
+        (tip === 'barkod' || tip === 'ikisi' ? '<svg id="bk-bar-'+idx+'"></svg>' : '') +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 8px;border-radius:10px;">' + item.tip + '</div>' +
+      '<div class="barkod-btn-row">' +
+        '<button class="btn btn-secondary btn-sm" data-idx="'+idx+'" data-kod="'+item.kod+'" onclick="tekKodIndir(parseInt(this.dataset.idx),this.dataset.kod)">⬇️ PNG</button>' +
+        '<button class="btn btn-secondary btn-sm" data-idx="'+idx+'" onclick="tekKodYazdir(parseInt(this.dataset.idx))">🖨️ Yazdır</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  // Kodları render et
+  setTimeout(function() {
+    liste.forEach(function(item, idx) {
+      if (tip === 'qr' || tip === 'ikisi') {
+        var canvas = document.getElementById('bk-qr-'+idx);
+        if (canvas) {
+          QRCode.toCanvas(canvas, item.kod, { width: b.qr, margin: 1, color: { dark:'#1A2036', light:'#ffffff' } }, function(err) {
+            if (err) console.error(err);
+          });
+        }
+      }
+      if (tip === 'barkod' || tip === 'ikisi') {
+        var svg = document.getElementById('bk-bar-'+idx);
+        if (svg) {
+          try {
+            JsBarcode(svg, item.kod, {
+              format: 'CODE128', width: 2, height: b.bh,
+              displayValue: true, fontSize: 11,
+              lineColor: '#1A2036', background: '#ffffff',
+              margin: 8
+            });
+          } catch(e) { svg.innerHTML = '<text style="font-size:11px;fill:var(--danger);">Barkod oluşturulamadı</text>'; }
+        }
+      }
+    });
+  }, 50);
+}
+
+function tekKodIndir(idx, kodAdi) {
+  var area = document.getElementById('bk-area-'+idx);
+  if (!area) return;
+
+  // Canvas veya SVG'yi PNG'ye çevir
+  var canvas = area.querySelector('canvas');
+  var svg = area.querySelector('svg');
+
+  if (canvas) {
+    var link = document.createElement('a');
+    link.download = kodAdi + '-qr.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } else if (svg) {
+    var svgData = new XMLSerializer().serializeToString(svg);
+    var svgBlob = new Blob([svgData], {type:'image/svg+xml;charset=utf-8'});
+    var link = document.createElement('a');
+    link.download = kodAdi + '-barkod.svg';
+    link.href = URL.createObjectURL(svgBlob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+  showToast('İndiriliyor: ' + kodAdi, 'success');
+}
+
+function tekKodYazdir(idx) {
+  var kart = document.getElementById('bk-kart-'+idx);
+  if (!kart) return;
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>Etiket</title><style>body{margin:20px;font-family:sans-serif;} canvas,svg{display:block;margin:8px auto;}</style></head><body>');
+  win.document.write(kart.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+  win.print();
+}
+
+function tumunuYazdir() {
+  window.print();
+}
+
+function secilenleriIndir() {
+  showToast('Tüm kodları PNG olarak tek tek indirin', 'success');
 }
 
 // ======== TOAST ========
