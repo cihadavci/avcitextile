@@ -59,8 +59,8 @@ header {
 .nav-item.disabled { opacity: 0.4; pointer-events: none; }
 
 .main { padding: 32px; overflow-y: auto; max-height: calc(100vh - 56px); }
-.page { display: none; }
-.page.active { display: block; }
+.page { display: none; position: absolute; top: 0; left: 0; right: 0; }
+.page.active { display: block; position: relative; }
 
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
 .page-title { font-family: var(--font-head); font-size: 26px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; color: var(--text); }
@@ -1667,11 +1667,9 @@ function showPage(id, el) {
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
   // Sayfayı en üste taşı
-  try {
-    var mainEl = document.querySelector('.main');
-    if (mainEl) { mainEl.scrollTop = 0; mainEl.scrollTo({top:0,behavior:'instant'}); }
-  } catch(e) {}
-  try { window.scrollTo({top:0,behavior:'instant'}); } catch(e) {}
+  try { document.querySelector('.main').scrollTop = 0; } catch(e) {}
+  try { document.documentElement.scrollTop = 0; } catch(e) {}
+  try { document.body.scrollTop = 0; } catch(e) {}
 
   if (id === 'urun-listesi') urunListesiGoster();
   if (id === 'uretim-giris') uretimSayfasiAc();
@@ -2801,11 +2799,8 @@ function oturumAc(kul) {
   sayaclariGuncelle();
   // Giriş sonrası dashboard'a git
   showPage('dashboard', document.querySelector('.nav-item'));
-  try {
-    var mainEl2 = document.querySelector('.main');
-    if (mainEl2) { mainEl2.scrollTop = 0; }
-  } catch(e) {}
-  try { window.scrollTo({top:0,behavior:'instant'}); } catch(e) {}
+  try { document.querySelector('.main').scrollTop = 0; } catch(e) {}
+  try { document.documentElement.scrollTop = 0; } catch(e) {}
 }
 
 function cikisYap() {
