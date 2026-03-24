@@ -1663,6 +1663,8 @@ function showPage(id, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   if (el) el.classList.add('active');
+  // Sayfayı en üste taşı
+  document.querySelector('.main').scrollTo(0, 0);
 
   if (id === 'urun-listesi') urunListesiGoster();
   if (id === 'uretim-giris') uretimSayfasiAc();
